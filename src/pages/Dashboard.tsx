@@ -1,7 +1,6 @@
-
 import { FC, useState, useEffect } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
-import { Check, Clock, Phone, AlertCircle, Clock3, DollarSign, FileUp, Play, Pause, Search, X } from "lucide-react";
+import { Check, Clock, Phone, AlertCircle, Clock3, DollarSign, FileUp, Play, Pause, Search, X, Volume2 } from "lucide-react";
 import { toast } from "sonner";
 import StatCard from "@/components/StatCard";
 import { Button } from "@/components/ui/button";
@@ -34,6 +33,7 @@ interface Lead {
   duration: number;
   cost: number;
   campaign_id?: string;
+  recording_url?: string | null;
 }
 
 const Dashboard: FC = () => {
@@ -68,6 +68,7 @@ const Dashboard: FC = () => {
   const [showUploadDialog, setShowUploadDialog] = useState(false);
   const [currentCampaignId, setCurrentCampaignId] = useState<string | null>(null);
   const [isDashboardInitialized, setIsDashboardInitialized] = useState(false);
+  const [playingLeadId, setPlayingLeadId] = useState<string | null>(null);
 
   // Load campaign data if campaignId is present in URL
   useEffect(() => {
@@ -652,6 +653,11 @@ const Dashboard: FC = () => {
     toast.info("Search cleared");
   };
 
+  // Audio player functions
+  const handlePlayRecording = (leadId: string) => {
+    setPlayingLeadId(playingLeadId === leadId ? null : leadId);
+  };
+
   return (
     <div className="space-y-8">
       <div className="flex flex-col space-y-2">
@@ -982,6 +988,7 @@ const Dashboard: FC = () => {
                   <TableHead>Disposition</TableHead>
                   <TableHead>Duration (min)</TableHead>
                   <TableHead>Cost</TableHead>
+                  <TableHead>Recording</TableHead>
                   <TableHead>Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -995,6 +1002,37 @@ const Dashboard: FC = () => {
                       <TableCell>{lead.disposition || '-'}</TableCell>
                       <TableCell>{lead.duration?.toFixed(1) || '0.0'}</TableCell>
                       <TableCell>${lead.cost?.toFixed(2) || '0.00'}</TableCell>
+                      <TableCell>
+                        {lead.recording_url ? (
+                          <div className="space-y-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handlePlayRecording(lead.id)}
+                              className="flex items-center gap-2"
+                            >
+                              <Volume2 className="h-4 w-4" />
+                              {playingLeadId === lead.id ? 'Hide Player' : 'Play Recording'}
+                            </Button>
+                            {playingLeadId === lead.id && (
+                              <div className="mt-2">
+                                <audio 
+                                  controls 
+                                  className="w-full max-w-xs"
+                                  src={lead.recording_url}
+                                  onError={() => {
+                                    toast.error("Failed to load recording");
+                                  }}
+                                >
+                                  Your browser does not support the audio element.
+                                </audio>
+                              </div>
+                            )}
+                          </div>
+                        ) : (
+                          <span className="text-muted-foreground text-sm">No recording</span>
+                        )}
+                      </TableCell>
                       <TableCell>
                         {lead.status === 'Pending' && lead.phone_id && (
                           <Button 
@@ -1011,7 +1049,7 @@ const Dashboard: FC = () => {
                   ))
                 ) : (
                   <TableRow className="h-[100px]">
-                    <TableCell colSpan={7} className="text-center text-muted-foreground">
+                    <TableCell colSpan={8} className="text-center text-muted-foreground">
                       {searchTerm && isSearchActive 
                         ? "No matching leads found." 
                         : isViewingCampaign 
