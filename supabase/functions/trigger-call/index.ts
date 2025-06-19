@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
@@ -19,7 +18,11 @@ serve(async (req) => {
   }
 
   try {
-    const { leadId } = await req.json();
+    const { leadId, assistantId } = await req.json();
+    
+    // Use the provided assistantId or fall back to default
+    const defaultAssistantId = "40664072-59ad-4106-9d5d-1fd5ed5dacbe"; // You can update this default
+    const finalAssistantId = assistantId || defaultAssistantId;
     
     // Get the Supabase client with admin privileges
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
@@ -80,7 +83,7 @@ serve(async (req) => {
 
     // Prepare the payload for Vapi
     const payload = {
-      assistantId: "40664072-59ad-4106-9d5d-1fd5ed5dacbe", // Using the ID provided by user
+      assistantId: finalAssistantId, // Now uses the dynamic or default assistant ID
       assistantOverrides: {
         variableValues: {
           Name: lead.name,
