@@ -1,3 +1,4 @@
+
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
@@ -21,7 +22,7 @@ serve(async (req) => {
     const { leadId, assistantId } = await req.json();
     
     // Use the provided assistantId or fall back to default
-    const defaultAssistantId = "40664072-59ad-4106-9d5d-1fd5ed5dacbe"; // You can update this default
+    const defaultAssistantId = "48b1e44a-c1ff-4f4e-a9e0-7b1e03f197ea"; // Updated with new assistant ID
     const finalAssistantId = assistantId || defaultAssistantId;
     
     // Get the Supabase client with admin privileges
