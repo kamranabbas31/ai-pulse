@@ -104,71 +104,73 @@ const Campaigns: FC = () => {
           <h3 className="text-lg font-semibold">Campaign History</h3>
           <p className="text-sm text-muted-foreground">List of all your uploaded campaign files and their statuses</p>
         </div>
-        <div className="overflow-x-auto">
-          <table className="w-full caption-bottom text-sm min-w-[1200px]">
-            <thead>
-              <tr className="border-b">
-                <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground whitespace-nowrap">Campaign Name</th>
-                <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground whitespace-nowrap">File Name</th>
-                <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground whitespace-nowrap">Status</th>
-                <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground whitespace-nowrap">Leads</th>
-                <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground whitespace-nowrap">Completed</th>
-                <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground whitespace-nowrap">In Progress</th>
-                <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground whitespace-nowrap">Remaining</th>
-                <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground whitespace-nowrap">Failed</th>
-                <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground whitespace-nowrap">Duration (min)</th>
-                <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground whitespace-nowrap">Cost ($)</th>
-                <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground whitespace-nowrap">Date Created</th>
-                <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground whitespace-nowrap">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {isLoading ? (
-                <tr className="h-[100px]">
-                  <td colSpan={12} className="text-center text-muted-foreground">
-                    Loading campaigns...
-                  </td>
+        <div className="w-full overflow-x-auto">
+          <div className="min-w-[1200px]">
+            <table className="w-full caption-bottom text-sm">
+              <thead>
+                <tr className="border-b">
+                  <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Campaign Name</th>
+                  <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">File Name</th>
+                  <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Status</th>
+                  <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Leads</th>
+                  <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Completed</th>
+                  <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">In Progress</th>
+                  <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Remaining</th>
+                  <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Failed</th>
+                  <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Duration (min)</th>
+                  <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Cost ($)</th>
+                  <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Date Created</th>
+                  <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Actions</th>
                 </tr>
-              ) : campaigns.length > 0 ? (
-                campaigns.map((campaign) => (
-                  <tr 
-                    key={campaign.id} 
-                    className="border-b hover:bg-gray-50 cursor-pointer transition-colors"
-                    onClick={() => handleCampaignClick(campaign.id)}
-                  >
-                    <td className="p-4 align-middle whitespace-nowrap">{campaign.name}</td>
-                    <td className="p-4 align-middle whitespace-nowrap">{campaign.file_name || '-'}</td>
-                    <td className="p-4 align-middle whitespace-nowrap">{getStatusBadge(campaign.status)}</td>
-                    <td className="p-4 align-middle whitespace-nowrap">{campaign.leads_count}</td>
-                    <td className="p-4 align-middle whitespace-nowrap">{campaign.completed}</td>
-                    <td className="p-4 align-middle whitespace-nowrap">{campaign.in_progress}</td>
-                    <td className="p-4 align-middle whitespace-nowrap">{campaign.remaining}</td>
-                    <td className="p-4 align-middle whitespace-nowrap">{campaign.failed}</td>
-                    <td className="p-4 align-middle whitespace-nowrap">{campaign.duration.toFixed(1)}</td>
-                    <td className="p-4 align-middle whitespace-nowrap">${campaign.cost.toFixed(2)}</td>
-                    <td className="p-4 align-middle whitespace-nowrap">{formatDate(campaign.created_at)}</td>
-                    <td className="p-4 align-middle whitespace-nowrap">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={(e) => handleDownloadReport(campaign.id, campaign.name, e)}
-                        className="flex items-center gap-2"
-                      >
-                        <Download className="h-4 w-4" />
-                        Download
-                      </Button>
+              </thead>
+              <tbody>
+                {isLoading ? (
+                  <tr className="h-[100px]">
+                    <td colSpan={12} className="text-center text-muted-foreground">
+                      Loading campaigns...
                     </td>
                   </tr>
-                ))
-              ) : (
-                <tr className="h-[100px]">
-                  <td colSpan={12} className="text-center text-muted-foreground">
-                    No campaigns found. Create a new campaign to get started.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
+                ) : campaigns.length > 0 ? (
+                  campaigns.map((campaign) => (
+                    <tr 
+                      key={campaign.id} 
+                      className="border-b hover:bg-gray-50 cursor-pointer transition-colors"
+                      onClick={() => handleCampaignClick(campaign.id)}
+                    >
+                      <td className="p-4 align-middle">{campaign.name}</td>
+                      <td className="p-4 align-middle">{campaign.file_name || '-'}</td>
+                      <td className="p-4 align-middle">{getStatusBadge(campaign.status)}</td>
+                      <td className="p-4 align-middle">{campaign.leads_count}</td>
+                      <td className="p-4 align-middle">{campaign.completed}</td>
+                      <td className="p-4 align-middle">{campaign.in_progress}</td>
+                      <td className="p-4 align-middle">{campaign.remaining}</td>
+                      <td className="p-4 align-middle">{campaign.failed}</td>
+                      <td className="p-4 align-middle">{campaign.duration.toFixed(1)}</td>
+                      <td className="p-4 align-middle">${campaign.cost.toFixed(2)}</td>
+                      <td className="p-4 align-middle">{formatDate(campaign.created_at)}</td>
+                      <td className="p-4 align-middle">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={(e) => handleDownloadReport(campaign.id, campaign.name, e)}
+                          className="flex items-center gap-2"
+                        >
+                          <Download className="h-4 w-4" />
+                          Download
+                        </Button>
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr className="h-[100px]">
+                    <td colSpan={12} className="text-center text-muted-foreground">
+                      No campaigns found. Create a new campaign to get started.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
     </div>
