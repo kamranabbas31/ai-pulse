@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
 // Define CORS headers for browser requests
@@ -66,7 +65,7 @@ serve(async (req) => {
     phoneNumber = extractPhoneNumber(payload);
     console.log("Extracted phone number:", phoneNumber);
     
-    // Extract disposition
+    // Extract disposition using new logic
     disposition = extractDisposition(payload);
     console.log("Extracted disposition:", disposition);
     
@@ -256,46 +255,196 @@ function extractCustomerName(payload) {
   return null;
 }
 
-// Extract disposition from analysis data
+// Updated disposition extraction function
 function extractDisposition(payload) {
-  if (payload.message && payload.message.analysis) {
-    if (payload.message.analysis.successEvaluation) {
-      try {
-        const evaluationData = JSON.parse(payload.message.analysis.successEvaluation);
-        if (evaluationData && evaluationData.disposition) {
-          return evaluationData.disposition;
-        }
-      } catch (e) {
-        // If not valid JSON, use as raw string
-        return payload.message.analysis.successEvaluation;
-      }
-    }
-    
-    if (payload.message.analysis.structuredData) {
-      const sd = payload.message.analysis.structuredData;
+  let endReason = null;
+  let summary = null;
+  let transcript = null;
+  
+  // Extract end_reason
+  if (payload.endedReason) {
+    endReason = payload.endedReason;
+  } else if (payload.message && payload.message.endedReason) {
+    endReason = payload.message.endedReason;
+  } else if (payload.end_reason) {
+    endReason = payload.end_reason;
+  } else if (payload.message && payload.message.end_reason) {
+    endReason = payload.message.end_reason;
+  }
+  
+  // Extract summary
+  if (payload.message && payload.message.analysis && payload.message.analysis.summary) {
+    summary = payload.message.analysis.summary;
+  } else if (payload.analysis && payload.analysis.summary) {
+    summary = payload.analysis.summary;
+  } else if (payload.summary) {
+    summary = payload.summary;
+  }
+  
+  // Extract transcript
+  if (payload.message && payload.message.transcript) {
+    transcript = payload.message.transcript;
+  } else if (payload.transcript) {
+    transcript = payload.transcript;
+  }
+  
+  console.log("End reason:", endReason);
+  console.log("Summary:", summary ? summary.substring(0, 100) + "..." : "None");
+  console.log("Transcript available:", transcript ? "Yes" : "No");
+  
+  // Determine disposition based on end_reason first
+  if (endReason) {
+    switch (endReason.toLowerCase()) {
+      case 'customer-ended-call':
+      case 'customer_ended_call':
+        return analyzeCustomerEndedCall(summary, transcript);
       
-      if (sd.disposition) {
-        return sd.disposition;
-      } else if (sd.customer_objection) {
-        return sd.customer_objection;
-      } else if (sd.call_reason) {
-        return `Call reason: ${sd.call_reason}`;
-      } else if (sd.outcome) {
-        return `Outcome: ${sd.outcome}`;
-      } else if (sd.summary) {
-        // Extract first sentence if it's a long summary
-        const summary = sd.summary;
-        return summary.length > 50 ? summary.split('.')[0] + '.' : summary;
-      }
-    }
-    
-    // Try the summary as a last resort
-    if (payload.message.analysis.summary) {
-      const summary = payload.message.analysis.summary;
-      return summary.length > 50 ? summary.split('.')[0] + '.' : summary;
+      case 'assistant-ended-call':
+      case 'assistant_ended_call':
+        return analyzeAssistantEndedCall(summary, transcript);
+      
+      case 'voicemail':
+      case 'voicemail-reached':
+      case 'voicemail_reached':
+        return "Voicemail";
+      
+      case 'no-answer':
+      case 'no_answer':
+      case 'customer-did-not-answer':
+      case 'customer_did_not_answer':
+        return "No Answer";
+      
+      case 'customer-busy':
+      case 'customer_busy':
+      case 'busy':
+        return "Busy";
+      
+      case 'assistant-error':
+      case 'assistant_error':
+      case 'error':
+        return "Technical Error";
+      
+      case 'assistant-request-failed':
+      case 'assistant_request_failed':
+        return "System Error";
+      
+      case 'phone-call-provider-error':
+      case 'phone_call_provider_error':
+        return "Provider Error";
+      
+      default:
+        console.log(`Unknown end reason: ${endReason}, analyzing content...`);
+        return analyzeCallContent(summary, transcript, endReason);
     }
   }
   
+  // If no end_reason, analyze based on summary and transcript
+  return analyzeCallContent(summary, transcript, null);
+}
+
+// Analyze calls ended by customer
+function analyzeCustomerEndedCall(summary, transcript) {
+  const content = (summary || "") + " " + (transcript || "");
+  const lowerContent = content.toLowerCase();
+  
+  // Check for positive outcomes
+  if (lowerContent.includes("interested") || 
+      lowerContent.includes("yes") || 
+      lowerContent.includes("sounds good") ||
+      lowerContent.includes("tell me more") ||
+      lowerContent.includes("schedule") ||
+      lowerContent.includes("appointment")) {
+    return "Interested";
+  }
+  
+  // Check for objections
+  if (lowerContent.includes("not interested") || 
+      lowerContent.includes("no thank") ||
+      lowerContent.includes("don't want") ||
+      lowerContent.includes("remove me") ||
+      lowerContent.includes("stop calling")) {
+    return "Not Interested";
+  }
+  
+  // Check for callback requests
+  if (lowerContent.includes("call back") || 
+      lowerContent.includes("later") ||
+      lowerContent.includes("busy right now")) {
+    return "Callback Requested";
+  }
+  
+  return "Customer Ended Call";
+}
+
+// Analyze calls ended by assistant
+function analyzeAssistantEndedCall(summary, transcript) {
+  const content = (summary || "") + " " + (transcript || "");
+  const lowerContent = content.toLowerCase();
+  
+  // Check if call completed successfully
+  if (lowerContent.includes("completed") || 
+      lowerContent.includes("successful") ||
+      lowerContent.includes("information provided") ||
+      lowerContent.includes("questions answered")) {
+    return "Call Completed";
+  }
+  
+  // Check for qualifying outcomes
+  if (lowerContent.includes("qualified") || 
+      lowerContent.includes("lead generated") ||
+      lowerContent.includes("interested prospect")) {
+    return "Qualified Lead";
+  }
+  
+  return "Assistant Completed Call";
+}
+
+// Analyze call content when end_reason is unclear
+function analyzeCallContent(summary, transcript, endReason) {
+  const content = (summary || "") + " " + (transcript || "");
+  const lowerContent = content.toLowerCase();
+  
+  // Check for voicemail indicators in content
+  if (lowerContent.includes("voicemail") || 
+      lowerContent.includes("leave a message") ||
+      lowerContent.includes("beep")) {
+    return "Voicemail";
+  }
+  
+  // Check for no answer indicators
+  if (lowerContent.includes("no answer") || 
+      lowerContent.includes("didn't answer") ||
+      content.trim().length < 10) {
+    return "No Answer";
+  }
+  
+  // Check for positive outcomes
+  if (lowerContent.includes("interested") || 
+      lowerContent.includes("qualified") ||
+      lowerContent.includes("schedule") ||
+      lowerContent.includes("appointment")) {
+    return "Interested";
+  }
+  
+  // Check for negative outcomes
+  if (lowerContent.includes("not interested") || 
+      lowerContent.includes("hung up") ||
+      lowerContent.includes("declined")) {
+    return "Not Interested";
+  }
+  
+  // Check for callback requests
+  if (lowerContent.includes("call back") || 
+      lowerContent.includes("try again later")) {
+    return "Callback Requested";
+  }
+  
+  // If we have an end reason but couldn't categorize it
+  if (endReason) {
+    return `Other: ${endReason}`;
+  }
+  
+  // Default fallback
   return "Unknown";
 }
 
