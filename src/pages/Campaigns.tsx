@@ -1,4 +1,3 @@
-
 import { FC, useEffect, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { fetchCampaigns } from "@/services/campaignService";
@@ -105,11 +104,10 @@ const Campaigns: FC = () => {
           <p className="text-sm text-muted-foreground">List of all your uploaded campaign files and their statuses</p>
         </div>
         <div className="overflow-x-auto max-w-full">
-          <table className="w-full min-w-[1200px] caption-bottom text-sm">
+          <table className="w-full min-w-[1100px] caption-bottom text-sm">
             <thead>
               <tr className="border-b">
                 <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground whitespace-nowrap">Campaign Name</th>
-                <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground whitespace-nowrap">File Name</th>
                 <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground whitespace-nowrap">Status</th>
                 <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground whitespace-nowrap">Leads</th>
                 <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground whitespace-nowrap">Completed</th>
@@ -125,7 +123,7 @@ const Campaigns: FC = () => {
             <tbody>
               {isLoading ? (
                 <tr className="h-[100px]">
-                  <td colSpan={12} className="text-center text-muted-foreground">
+                  <td colSpan={11} className="text-center text-muted-foreground">
                     Loading campaigns...
                   </td>
                 </tr>
@@ -137,7 +135,6 @@ const Campaigns: FC = () => {
                     onClick={() => handleCampaignClick(campaign.id)}
                   >
                     <td className="p-4 align-middle whitespace-nowrap">{campaign.name}</td>
-                    <td className="p-4 align-middle whitespace-nowrap">{campaign.file_name || '-'}</td>
                     <td className="p-4 align-middle whitespace-nowrap">{getStatusBadge(campaign.status)}</td>
                     <td className="p-4 align-middle whitespace-nowrap">{campaign.leads_count}</td>
                     <td className="p-4 align-middle whitespace-nowrap">{campaign.completed}</td>
@@ -162,7 +159,7 @@ const Campaigns: FC = () => {
                 ))
               ) : (
                 <tr className="h-[100px]">
-                  <td colSpan={12} className="text-center text-muted-foreground">
+                  <td colSpan={11} className="text-center text-muted-foreground">
                     No campaigns found. Create a new campaign to get started.
                   </td>
                 </tr>
