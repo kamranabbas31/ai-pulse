@@ -49,8 +49,8 @@ export const AppSidebar: FC<AppSidebarProps> = ({ currentPath }) => {
   };
 
   return (
-    <Sidebar className="border-r">
-      <SidebarHeader>
+    <Sidebar className="border-r bg-white z-50">
+      <SidebarHeader className="bg-white">
         <div className="flex items-center space-x-2 px-4 py-2">
           <img 
             src="/lovable-uploads/620a3236-a743-4779-8cde-07f0a587c6ed.png" 
@@ -61,7 +61,7 @@ export const AppSidebar: FC<AppSidebarProps> = ({ currentPath }) => {
         </div>
       </SidebarHeader>
       
-      <SidebarContent>
+      <SidebarContent className="bg-white">
         <SidebarGroup>
           <SidebarGroupLabel>Management</SidebarGroupLabel>
           <SidebarGroupContent>
@@ -81,7 +81,7 @@ export const AppSidebar: FC<AppSidebarProps> = ({ currentPath }) => {
         </SidebarGroup>
       </SidebarContent>
       
-      <SidebarFooter>
+      <SidebarFooter className="bg-white">
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton asChild>
