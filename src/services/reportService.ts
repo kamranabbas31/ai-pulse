@@ -21,7 +21,6 @@ export const downloadCampaignReport = async (campaignId: string, campaignName: s
       'Disposition': lead.disposition || '',
       'Duration (minutes)': lead.duration ? lead.duration.toFixed(2) : '0.00',
       'Cost ($)': lead.cost ? lead.cost.toFixed(2) : '0.00',
-      'Created Date': lead.created_at ? new Date(lead.created_at).toLocaleDateString() : '',
       'Phone ID': lead.phone_id || ''
     }));
 
@@ -37,7 +36,6 @@ export const downloadCampaignReport = async (campaignId: string, campaignName: s
       { wch: 20 }, // Disposition
       { wch: 15 }, // Duration
       { wch: 10 }, // Cost
-      { wch: 12 }, // Created Date
       { wch: 15 }  // Phone ID
     ];
     worksheet['!cols'] = columnWidths;
