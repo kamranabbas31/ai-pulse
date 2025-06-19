@@ -292,159 +292,108 @@ function extractDisposition(payload) {
   console.log("Summary:", summary ? summary.substring(0, 100) + "..." : "None");
   console.log("Transcript available:", transcript ? "Yes" : "No");
   
-  // Determine disposition based on end_reason first
-  if (endReason) {
-    switch (endReason.toLowerCase()) {
-      case 'customer-ended-call':
-      case 'customer_ended_call':
-        return analyzeCustomerEndedCall(summary, transcript);
-      
-      case 'assistant-ended-call':
-      case 'assistant_ended_call':
-        return analyzeAssistantEndedCall(summary, transcript);
-      
-      case 'voicemail':
-      case 'voicemail-reached':
-      case 'voicemail_reached':
-        return "Voicemail";
-      
-      case 'no-answer':
-      case 'no_answer':
-      case 'customer-did-not-answer':
-      case 'customer_did_not_answer':
-        return "No Answer";
-      
-      case 'customer-busy':
-      case 'customer_busy':
-      case 'busy':
-        return "Busy";
-      
-      case 'assistant-error':
-      case 'assistant_error':
-      case 'error':
-        return "Technical Error";
-      
-      case 'assistant-request-failed':
-      case 'assistant_request_failed':
-        return "System Error";
-      
-      case 'phone-call-provider-error':
-      case 'phone_call_provider_error':
-        return "Provider Error";
-      
-      default:
-        console.log(`Unknown end reason: ${endReason}, analyzing content...`);
-        return analyzeCallContent(summary, transcript, endReason);
-    }
-  }
-  
-  // If no end_reason, analyze based on summary and transcript
-  return analyzeCallContent(summary, transcript, null);
-}
-
-// Analyze calls ended by customer
-function analyzeCustomerEndedCall(summary, transcript) {
+  // Combine summary and transcript for analysis
   const content = (summary || "") + " " + (transcript || "");
   const lowerContent = content.toLowerCase();
   
-  // Check for positive outcomes
-  if (lowerContent.includes("interested") || 
-      lowerContent.includes("yes") || 
-      lowerContent.includes("sounds good") ||
-      lowerContent.includes("tell me more") ||
-      lowerContent.includes("schedule") ||
-      lowerContent.includes("appointment")) {
-    return "Interested";
+  // Check for Answering Machine first
+  if (lowerContent.includes("leave a message") || 
+      lowerContent.includes("at the tone") ||
+      lowerContent.includes("voicemail") ||
+      lowerContent.includes("can't take your call") ||
+      lowerContent.includes("after the beep") ||
+      endReason?.toLowerCase().includes("voicemail")) {
+    return "Answering Machine";
   }
   
-  // Check for objections
-  if (lowerContent.includes("not interested") || 
-      lowerContent.includes("no thank") ||
-      lowerContent.includes("don't want") ||
-      lowerContent.includes("remove me") ||
-      lowerContent.includes("stop calling")) {
-    return "Not Interested";
-  }
-  
-  // Check for callback requests
-  if (lowerContent.includes("call back") || 
-      lowerContent.includes("later") ||
-      lowerContent.includes("busy right now")) {
-    return "Callback Requested";
-  }
-  
-  return "Customer Ended Call";
-}
-
-// Analyze calls ended by assistant
-function analyzeAssistantEndedCall(summary, transcript) {
-  const content = (summary || "") + " " + (transcript || "");
-  const lowerContent = content.toLowerCase();
-  
-  // Check if call completed successfully
-  if (lowerContent.includes("completed") || 
-      lowerContent.includes("successful") ||
-      lowerContent.includes("information provided") ||
-      lowerContent.includes("questions answered")) {
-    return "Call Completed";
-  }
-  
-  // Check for qualifying outcomes
-  if (lowerContent.includes("qualified") || 
-      lowerContent.includes("lead generated") ||
-      lowerContent.includes("interested prospect")) {
-    return "Qualified Lead";
-  }
-  
-  return "Assistant Completed Call";
-}
-
-// Analyze call content when end_reason is unclear
-function analyzeCallContent(summary, transcript, endReason) {
-  const content = (summary || "") + " " + (transcript || "");
-  const lowerContent = content.toLowerCase();
-  
-  // Check for voicemail indicators in content
-  if (lowerContent.includes("voicemail") || 
-      lowerContent.includes("leave a message") ||
-      lowerContent.includes("beep")) {
-    return "Voicemail";
-  }
-  
-  // Check for no answer indicators
-  if (lowerContent.includes("no answer") || 
-      lowerContent.includes("didn't answer") ||
-      content.trim().length < 10) {
+  // Check for No Answer
+  if (endReason?.toLowerCase().includes("customer did not answer") ||
+      endReason?.toLowerCase().includes("customer-did-not-answer") ||
+      endReason?.toLowerCase().includes("twilio failed connection") ||
+      endReason?.toLowerCase().includes("no-answer") ||
+      endReason?.toLowerCase().includes("no_answer")) {
     return "No Answer";
   }
   
-  // Check for positive outcomes
-  if (lowerContent.includes("interested") || 
-      lowerContent.includes("qualified") ||
-      lowerContent.includes("schedule") ||
-      lowerContent.includes("appointment")) {
-    return "Interested";
+  // Check for Warm Transfer - Education
+  if (endReason?.toLowerCase().includes("assistant forwarded call") ||
+      endReason?.toLowerCase().includes("assistant-forwarded-call")) {
+    if (lowerContent.includes("education consultant") ||
+        lowerContent.includes("education advisor") ||
+        lowerContent.includes("forwarded to education") ||
+        lowerContent.includes("transferred to education")) {
+      return "Warm Transfer - Education";
+    }
+    
+    // Check for Warm Transfer - Job
+    if (lowerContent.includes("job consultant") ||
+        lowerContent.includes("job advisor") ||
+        lowerContent.includes("forwarded to job") ||
+        lowerContent.includes("transferred to job")) {
+      return "Warm Transfer - Job";
+    }
+    
+    // Generic warm transfer if we can't determine type
+    return "Warm Transfer";
   }
   
-  // Check for negative outcomes
-  if (lowerContent.includes("not interested") || 
-      lowerContent.includes("hung up") ||
-      lowerContent.includes("declined")) {
+  // Check for Do Not Contact
+  if (lowerContent.includes("do not call") ||
+      lowerContent.includes("don't call") ||
+      lowerContent.includes("remove me") ||
+      lowerContent.includes("stop calling") ||
+      lowerContent.includes("take me off") ||
+      lowerContent.includes("unsubscribe")) {
+    return "Do Not Contact";
+  }
+  
+  // Check for Language Barrier
+  if (lowerContent.includes("language barrier") ||
+      lowerContent.includes("no english") ||
+      lowerContent.includes("don't speak english") ||
+      lowerContent.includes("habla español") ||
+      lowerContent.includes("communication issue") ||
+      lowerContent.includes("language problem")) {
+    return "Language Barrier";
+  }
+  
+  // Check for Not Qualified
+  if (lowerContent.includes("not qualified") ||
+      lowerContent.includes("qualification failed") ||
+      lowerContent.includes("no high school diploma") ||
+      lowerContent.includes("no ged") ||
+      lowerContent.includes("under 18") ||
+      lowerContent.includes("not a us citizen") ||
+      lowerContent.includes("no green card") ||
+      lowerContent.includes("currently enrolled in school") ||
+      lowerContent.includes("currently enrolled in college") ||
+      lowerContent.includes("still in school") ||
+      lowerContent.includes("still in college")) {
+    return "Not Qualified";
+  }
+  
+  // Check for Not Interested
+  if (lowerContent.includes("not interested") ||
+      lowerContent.includes("no thanks") ||
+      lowerContent.includes("not right now") ||
+      lowerContent.includes("not looking") ||
+      lowerContent.includes("not for me") ||
+      lowerContent.includes("don't want")) {
     return "Not Interested";
   }
   
-  // Check for callback requests
-  if (lowerContent.includes("call back") || 
-      lowerContent.includes("try again later")) {
-    return "Callback Requested";
+  // Check for Hang Up based on end reason
+  if (endReason?.toLowerCase().includes("customer ended call") ||
+      endReason?.toLowerCase().includes("customer-ended-call")) {
+    // If customer ended call but we haven't matched other categories, it's likely a hang up
+    return "Hang Up";
   }
   
-  // If we have an end reason but couldn't categorize it
+  // Default fallback
   if (endReason) {
     return `Other: ${endReason}`;
   }
   
-  // Default fallback
   return "Unknown";
 }
 
