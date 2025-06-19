@@ -478,58 +478,55 @@ const Dashboard: FC = () => {
   };
 
   const startExecution = () => {
-    // Get only pending leads with valid phone IDs
-    const pendingLeads = leads.filter(lead => lead.status === 'Pending' && lead.phone_id !== null);
+    // Get the current leads data and filter for ONLY truly pending leads
+    console.log("All leads:", leads);
+    const pendingLeads = leads.filter(lead => {
+      const isPending = lead.status === 'Pending';
+      const hasPhoneId = lead.phone_id !== null;
+      console.log(`Lead ${lead.name}: status=${lead.status}, hasPhoneId=${hasPhoneId}, isPending=${isPending}`);
+      return isPending && hasPhoneId;
+    });
+    
+    console.log("Filtered pending leads:", pendingLeads);
     
     if (pendingLeads.length === 0) {
-      toast.error("No pending leads to process");
+      toast.error("No pending leads with phone IDs available to process");
       return;
     }
     
     setIsExecuting(true);
-    toast.success(`Started processing ${pendingLeads.length} leads`);
+    toast.success(`Started processing ${pendingLeads.length} pending leads`);
     
     // Get pacing interval in milliseconds
     const pacingInterval = (1 / parseInt(selectedPacing, 10)) * 1000;
-    setCurrentLeadIndex(0);
     
-    // Create a set to track leads that have already been processed
-    const processedLeadIds = new Set<string>();
+    // Create a queue of leads to process
+    let currentIndex = 0;
     
     // Start the interval to process leads based on pacing
-    const id = setInterval(() => {
-      setCurrentLeadIndex(prevIndex => {
-        // Safety check: make sure we have pending leads
-        if (pendingLeads.length === 0) {
-          if (intervalId !== null) {
-            clearInterval(intervalId);
-            setIntervalId(null);
-            setIsExecuting(false);
-            toast.error("No leads to process");
-          }
-          return -1;
+    const id = setInterval(async () => {
+      // Check if we've processed all leads
+      if (currentIndex >= pendingLeads.length) {
+        console.log("All leads processed, stopping execution");
+        stopExecution();
+        return;
+      }
+      
+      // Get the current lead to process
+      const currentLead = pendingLeads[currentIndex];
+      console.log(`Processing lead ${currentIndex + 1}/${pendingLeads.length}: ${currentLead.name}`);
+      
+      // Only trigger call if we're not already processing one
+      if (!isCallInProgress) {
+        try {
+          await triggerCall(currentLead.id);
+        } catch (error) {
+          console.error(`Error processing lead ${currentLead.name}:`, error);
         }
-        
-        if (prevIndex >= pendingLeads.length - 1) {
-          // We've processed all leads, but don't stop the interval yet
-          // as we want to let the actual calls complete
-          return -1;
-        }
-        
-        // Make sure we have a valid lead at this index
-        const currentLead = pendingLeads[prevIndex];
-        
-        // Check if we already processed this lead
-        if (currentLead && currentLead.id && !isCallInProgress && !processedLeadIds.has(currentLead.id)) {
-          // Add the lead to the processed set
-          processedLeadIds.add(currentLead.id);
-          // Trigger the call
-          triggerCall(currentLead.id);
-        }
-        
-        // Move to the next lead
-        return prevIndex + 1;
-      });
+      }
+      
+      // Move to the next lead
+      currentIndex++;
     }, pacingInterval);
     
     setIntervalId(id);
