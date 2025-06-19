@@ -20,8 +20,7 @@ export const downloadCampaignReport = async (campaignId: string, campaignName: s
       'Status': lead.status || '',
       'Disposition': lead.disposition || '',
       'Duration (minutes)': lead.duration ? lead.duration.toFixed(2) : '0.00',
-      'Cost ($)': lead.cost ? lead.cost.toFixed(2) : '0.00',
-      'Phone ID': lead.phone_id || ''
+      'Cost ($)': lead.cost ? lead.cost.toFixed(2) : '0.00'
     }));
 
     // Create workbook and worksheet
@@ -35,8 +34,7 @@ export const downloadCampaignReport = async (campaignId: string, campaignName: s
       { wch: 12 }, // Status
       { wch: 20 }, // Disposition
       { wch: 15 }, // Duration
-      { wch: 10 }, // Cost
-      { wch: 15 }  // Phone ID
+      { wch: 10 }  // Cost
     ];
     worksheet['!cols'] = columnWidths;
 
