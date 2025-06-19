@@ -13,7 +13,7 @@ export const downloadCampaignReport = async (campaignId: string, campaignName: s
       return;
     }
 
-    // Format the data for Excel
+    // Format the data for Excel using only existing fields
     const excelData = leads.map(lead => ({
       'Lead Name': lead.name || '',
       'Phone Number': lead.phone_number || '',
@@ -22,8 +22,7 @@ export const downloadCampaignReport = async (campaignId: string, campaignName: s
       'Duration (minutes)': lead.duration ? lead.duration.toFixed(2) : '0.00',
       'Cost ($)': lead.cost ? lead.cost.toFixed(2) : '0.00',
       'Created Date': lead.created_at ? new Date(lead.created_at).toLocaleDateString() : '',
-      'Updated Date': lead.updated_at ? new Date(lead.updated_at).toLocaleDateString() : '',
-      'Notes': lead.notes || ''
+      'Phone ID': lead.phone_id || ''
     }));
 
     // Create workbook and worksheet
@@ -39,8 +38,7 @@ export const downloadCampaignReport = async (campaignId: string, campaignName: s
       { wch: 15 }, // Duration
       { wch: 10 }, // Cost
       { wch: 12 }, // Created Date
-      { wch: 12 }, // Updated Date
-      { wch: 30 }  // Notes
+      { wch: 15 }  // Phone ID
     ];
     worksheet['!cols'] = columnWidths;
 
