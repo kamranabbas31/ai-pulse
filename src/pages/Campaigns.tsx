@@ -1,10 +1,11 @@
-
 import { FC, useEffect, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { fetchCampaigns } from "@/services/campaignService";
+import { downloadCampaignReport } from "@/services/reportService";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { Download } from "lucide-react";
 
 interface Campaign {
   id: string;
@@ -75,6 +76,11 @@ const Campaigns: FC = () => {
     navigate(`/?campaignId=${campaignId}`);
   };
 
+  const handleDownloadReport = async (campaignId: string, campaignName: string, event: React.MouseEvent) => {
+    event.stopPropagation(); // Prevent row click when downloading
+    await downloadCampaignReport(campaignId, campaignName);
+  };
+
   const handleRefresh = () => {
     loadCampaigns();
     toast.success("Campaigns refreshed");
@@ -113,12 +119,13 @@ const Campaigns: FC = () => {
                   <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Duration (min)</th>
                   <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Cost ($)</th>
                   <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Date Created</th>
+                  <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {isLoading ? (
                   <tr className="h-[100px]">
-                    <td colSpan={11} className="text-center text-muted-foreground">
+                    <td colSpan={12} className="text-center text-muted-foreground">
                       Loading campaigns...
                     </td>
                   </tr>
@@ -140,11 +147,22 @@ const Campaigns: FC = () => {
                       <td className="p-4 align-middle">{campaign.duration.toFixed(1)}</td>
                       <td className="p-4 align-middle">${campaign.cost.toFixed(2)}</td>
                       <td className="p-4 align-middle">{formatDate(campaign.created_at)}</td>
+                      <td className="p-4 align-middle">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={(e) => handleDownloadReport(campaign.id, campaign.name, e)}
+                          className="flex items-center gap-2"
+                        >
+                          <Download className="h-4 w-4" />
+                          Download
+                        </Button>
+                      </td>
                     </tr>
                   ))
                 ) : (
                   <tr className="h-[100px]">
-                    <td colSpan={11} className="text-center text-muted-foreground">
+                    <td colSpan={12} className="text-center text-muted-foreground">
                       No campaigns found. Create a new campaign to get started.
                     </td>
                   </tr>
