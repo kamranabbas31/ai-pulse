@@ -507,8 +507,12 @@ const Dashboard: FC = () => {
     const id = setInterval(async () => {
       // Check if we've processed all leads
       if (currentIndex >= pendingLeads.length) {
-        console.log("All leads processed, stopping execution");
-        stopExecution();
+        console.log(`Finished processing all ${pendingLeads.length} leads`);
+        // Clear the interval immediately to prevent loops
+        clearInterval(id);
+        setIntervalId(null);
+        setIsExecuting(false);
+        toast.success("Campaign execution completed");
         return;
       }
       
